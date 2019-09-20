@@ -1,0 +1,41 @@
+version: "3.5"
+
+services:
+  db:
+    image: mariadb
+    ports:
+      - "3306:3306"
+    volumes:
+      - ./data:/var/lib/mysql
+    environment:
+      - MYSQL_ROOT_PASSWORD=wordpressroot
+      - MYSQL_DATABASE=wordpress
+      - MYSQL_USER=wordpress
+      - MYSQL_PASSWORD=wordpress
+    restart: always
+    networks:
+      - backend
+  site:
+    build: ./bedrock
+    image: dword/site:latest
+    volumes:
+      - ./site:/var/www/html
+    networks:
+      - backend
+    depends_on:
+      - db
+  webserver:
+    image: nginx:1.17-alpine
+    restart: unless-stopped
+    depends_on:
+      - site
+    volumes:
+      - ./nginx:/etc/nginx/conf.d
+      - ./site:/var/www/html
+    ports:
+      - "80:80"
+    networks:
+      - backend
+networks:
+  backend:
+    driver: bridge
